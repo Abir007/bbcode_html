@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE extension SYSTEM "ext-1.0.dtd">
+
+<!--
+/**
+ *bbcode_html
+ *Author - Abir (http://studyforums.org)
+ */
+-->
+
+<extension engine="1.0">
+    <id>bbcode_html</id>
+    <title>html BBCODE</title>
+    <version>0.0.1</version>
+    <description>It will let you use html tag on your post.</description>
+    <author>Psychecroatan(Abir) - http://studyforums.org</author>
+    <minversion>1.3</minversion>
+    <maxtestedon>1.4.2</maxtestedon>
+    <hooks>
+<hook id="ps_parse_message_start"><![CDATA[
+              if (strpos($text, '[htm]') !== false && strpos($text, '[/htm]') !== false)		 
+			{
+                               //removing [htm][/htm] tags from text :P ;) :D 
+                               //Its my complementary approach in using bbcode tags :P :P 
+                               $text = str_replace("[htm]","",$text);
+			       $text = str_replace("[/htm]","",$text);
+
+                                // All Conversion Removed!
+
+		 //rest are copied from parser.php :P 	
+		 // If the message contains a code tag we have to split it up (text within [code][/code] shouldn't be touched)
+				if (strpos($text, '[code]') !== false && strpos($text, '[/code]') !== false)
+				{
+					list($inside, $outside) = split_text($text, '[code]', '[/code]', $errors);
+					$text = implode("\0", $outside);
+				}
+			
+				$return = ($hook = get_hook('ps_parse_message_post_split')) ? eval($hook) : null;
+				if ($return != null)
+					return $return;
+			
+				if ($forum_config['p_message_bbcode'] == '1' && strpos($text, '[') !== false && strpos($text, ']') !== false)
+					$text = do_bbcode($text);
+			
+				if ($forum_config['o_smilies'] == '1' && $forum_user['show_smilies'] == '1' && $hide_smilies == '0')
+					$text = do_smilies($text);
+			
+				$return = ($hook = get_hook('ps_parse_message_bbcode')) ? eval($hook) : null;
+				if ($return != null)
+					return $return;
+			
+				// Deal with newlines, tabs and multiple spaces
+				$pattern = array("\n", "\t", '  ', '  ');
+				$replace = array('<br />', '&nbsp; &nbsp; ', '&nbsp; ', ' &nbsp;');
+				$text = str_replace($pattern, $replace, $text);
+			
+				$return = ($hook = get_hook('ps_parse_message_pre_merge')) ? eval($hook) : null;
+				if ($return != null)
+					return $return;
+			
+				// If we split up the message before we have to concatenate it together again (code tags)
+				if (isset($inside))
+				{
+					$outside = explode("\0", $text);
+					$text = '';
+			
+					$num_tokens = count($outside);
+			
+					for ($i = 0; $i < $num_tokens; ++$i)
+					{
+						$text .= $outside[$i];
+						if (isset($inside[$i]))
+						$text .= '</p><div class="codebox"><pre><code>'.forum_trim($inside[$i], "\n\r").'</code></pre></div><p>';
+					}
+				}
+			
+				$return = ($hook = get_hook('ps_parse_message_post_merge')) ? eval($hook) : null;
+				if ($return != null)
+					return $return;
+			
+				// Add paragraph tag around post, but make sure there are no empty paragraphs
+				$text = preg_replace('#<br />\s*?<br />((\s*<br />)*)#i', "</p>$1<p>", $text);
+				$text = str_replace('<p><br />', '<p>', $text);
+				$text = str_replace('<p></p>', '', '<p>'.$text.'</p>');
+			
+				$return = ($hook = get_hook('ps_parse_message_end')) ? eval($hook) : null;
+				if ($return != null)
+					return $return;
+                                
+				return $text;
+
+			
+                        } else
+				return null; 
+		]]></hook>
+		
+        <hook id="ps_preparse_tags_start"><![CDATA[
+          // adding htm tag :)
+
+          $tags[] = 'htm';
+          $tags_opened[] = 'htm';
+          $tags_closed[] = 'htm';
+          $tags_inline[] = 'htm';
+          $tags_trim[] = 'htm';
+
+         //tag added :D
+
+        ]]></hook>
+      
+<hook id="pun_bbcode_pre_buttons_output">
+        <![CDATA[
+        //adding htm bbcode button to bbcode bar :)
+	$this->add_button(array('name'	=> 'htm', 'weight' => 60, 'image' => false));
+        //button added :P Cheers !!
+	]]></hook>
+
+    </hooks>
+</extension>
